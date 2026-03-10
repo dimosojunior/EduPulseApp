@@ -1,221 +1,208 @@
 import React, { useState } from "react";
 import {
-View,
-Text,
-TextInput,
-TouchableOpacity,
-StyleSheet,
-Alert,
-ScrollView,
-ActivityIndicator,
-KeyboardAvoidingView,
-Platform
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Animated,
+  ScrollView
 } from "react-native";
+
 import axios from "axios";
-import { useRouter } from "expo-router";
+
+import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
+
+import Toast from "react-native-toast-message";
+
+import * as Haptics from "expo-haptics";
+
+import Header from "./components/Header";
+import styles from "./CreateSchoolStyles"; // IMPORTED STYLES
 
 export default function CreateSchool() {
 
-const router = useRouter();
+  const [name, setName] = useState("");
+  const [location, setLocation] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [createdSchool, setCreatedSchool] = useState(null);
 
-const [name, setName] = useState("");
-const [location, setLocation] = useState("");
-const [loading, setLoading] = useState(false);
+  const scaleAnim = new Animated.Value(1);
 
-const createSchool = async () => {
+  // BUTTON ANIMATION
+  const pressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true
+    }).start();
+  }
 
-if (!name.trim()) {
-Alert.alert("Validation", "Please enter school name");
-return;
+  const pressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true
+    }).start();
+  }
+
+  // CREATE SCHOOL
+  const createSchool = async () => {
+
+    if (!name.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "School Name Required",
+        text2: "Please enter school name"
+      });
+      return;
+    }
+
+    if (!location.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Location Required",
+        text2: "Please enter school location"
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await axios.post(
+        "https://edupulse.pythonanywhere.com/create-school/",
+        { name, location }
+      );
+
+      setLoading(false);
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      Toast.show({
+        type: "success",
+        text1: "School Created",
+        text2: "Your school was registered successfully"
+      });
+
+      // Save created school to state
+      setCreatedSchool({ name, location });
+
+      // Clear form fields
+      setName("");
+      setLocation("");
+
+    } catch (error) {
+      setLoading(false);
+
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to create school"
+      });
+    }
+  }
+
+  return (
+    <LinearGradient
+      colors={["#020617", "#0f172a", "#1e293b"]}
+      style={styles.container}
+    >
+
+      <Header
+        title="School Dashboard"
+        subtitle="Management System"
+      />
+
+      <Image
+        source={{
+          uri: "https://images.unsplash.com/photo-1588072432836-e10032774350"
+        }}
+        style={styles.bg}
+      />
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+
+          <BlurView intensity={40} tint="dark" style={styles.blur}>
+
+            <Text style={styles.title}>Register School</Text>
+            <Text style={styles.subtitle}>Create your school and start managing students</Text>
+
+            <View style={styles.form}>
+
+              <Text style={styles.label}>School Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter school name"
+                placeholderTextColor="#94a3b8"
+                value={name}
+                onChangeText={setName}
+              />
+
+              <Text style={styles.label}>School Location</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter school location"
+                placeholderTextColor="#94a3b8"
+                value={location}
+                onChangeText={setLocation}
+              />
+
+              <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                <TouchableOpacity
+                  onPressIn={pressIn}
+                  onPressOut={pressOut}
+                  onPress={createSchool}
+                >
+                  <LinearGradient
+                    colors={["#2563eb", "#38bdf8"]}
+                    style={styles.button}
+                  >
+                    <Text style={styles.buttonText}>Create School</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </Animated.View>
+
+              <TouchableOpacity style={{ marginTop: 20 }} onPress={() => { /* optional navigation */ }}>
+                <Text style={styles.link}>Already have account? Login</Text>
+              </TouchableOpacity>
+
+            </View>
+
+            {createdSchool && (
+              <View style={styles.createdCard}>
+                <Text style={styles.createdTitle}>Created School:</Text>
+                <Text style={styles.createdName}>Name: {createdSchool.name}</Text>
+                <Text style={styles.createdLocation}>Location: {createdSchool.location}</Text>
+              </View>
+            )}
+
+          </BlurView>
+
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {loading && (
+        <View style={styles.loader}>
+          <View style={styles.loaderCard}>
+            <ActivityIndicator size="large" color="#2563eb" />
+            <Text style={styles.loadingText}>Creating school...</Text>
+          </View>
+        </View>
+      )}
+
+      <Toast />
+
+    </LinearGradient>
+  )
 }
-
-if (!location.trim()) {
-Alert.alert("Validation", "Please enter school location");
-return;
-}
-
-setLoading(true);
-
-try {
-
-const response = await axios.post(
-"https://edupulse.pythonanywhere.com/create-school/",
-{
-name: name,
-location: location
-}
-);
-
-setLoading(false);
-
-Alert.alert(
-"Success",
-"School created successfully",
-[
-{
-text: "OK",
-onPress: () => router.replace("/login")
-}
-]
-);
-
-} catch (error) {
-
-setLoading(false);
-
-if (error.response) {
-
-Alert.alert("Error", JSON.stringify(error.response.data));
-
-} else {
-
-Alert.alert("Error", "Network error, try again");
-
-}
-
-}
-
-};
-
-return (
-
-<KeyboardAvoidingView
-behavior={Platform.OS === "ios" ? "padding" : "height"}
-style={{ flex: 1 }}
->
-
-<ScrollView contentContainerStyle={styles.container}>
-
-<View style={styles.card}>
-
-<Text style={styles.title}>Create School</Text>
-
-<Text style={styles.subtitle}>
-Register your school to start using the system
-</Text>
-
-<Text style={styles.label}>School Name</Text>
-
-<TextInput
-placeholder="Enter school name"
-style={styles.input}
-value={name}
-onChangeText={setName}
-/>
-
-<Text style={styles.label}>School Location</Text>
-
-<TextInput
-placeholder="Enter school location"
-style={styles.input}
-value={location}
-onChangeText={setLocation}
-/>
-
-<TouchableOpacity
-style={styles.button}
-onPress={createSchool}
-disabled={loading}
->
-
-{loading ? (
-<ActivityIndicator color="#fff" />
-) : (
-<Text style={styles.buttonText}>Create School</Text>
-)}
-
-</TouchableOpacity>
-
-<TouchableOpacity
-style={{ marginTop: 20 }}
-onPress={() => router.push("/login")}
->
-
-<Text style={styles.link}>
-Already have an account? Login
-</Text>
-
-</TouchableOpacity>
-
-</View>
-
-</ScrollView>
-
-</KeyboardAvoidingView>
-
-);
-
-}
-
-const styles = StyleSheet.create({
-
-container: {
-flexGrow: 1,
-justifyContent: "center",
-padding: 20,
-backgroundColor: "#f2f4f7"
-},
-
-card: {
-backgroundColor: "#fff",
-padding: 25,
-borderRadius: 16,
-shadowColor: "#000",
-shadowOpacity: 0.1,
-shadowOffset: { width: 0, height: 4 },
-shadowRadius: 10,
-elevation: 5
-},
-
-title: {
-fontSize: 26,
-fontWeight: "bold",
-textAlign: "center",
-marginBottom: 10,
-color: "#1e293b"
-},
-
-subtitle: {
-textAlign: "center",
-marginBottom: 25,
-color: "#64748b"
-},
-
-label: {
-fontSize: 14,
-fontWeight: "600",
-marginBottom: 6,
-color: "#334155"
-},
-
-input: {
-borderWidth: 1,
-borderColor: "#e2e8f0",
-borderRadius: 10,
-padding: 14,
-marginBottom: 18,
-backgroundColor: "#f8fafc",
-fontSize: 15
-},
-
-button: {
-backgroundColor: "#2563eb",
-padding: 15,
-borderRadius: 12,
-alignItems: "center",
-marginTop: 10
-},
-
-buttonText: {
-color: "#fff",
-fontSize: 16,
-fontWeight: "bold"
-},
-
-link: {
-textAlign: "center",
-color: "#2563eb",
-fontWeight: "600"
-}
-
-});

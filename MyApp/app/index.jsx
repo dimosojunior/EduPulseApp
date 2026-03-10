@@ -22,6 +22,8 @@ withRepeat,
 withTiming
 } from "react-native-reanimated";
 
+import Header from "./components/Header";
+
 export default function Home(){
 
 const router = useRouter();
@@ -98,25 +100,10 @@ style={styles.container}
 <StatusBar barStyle="light-content"/>
 
 {/* HEADER */}
-
-<View style={styles.header}>
-
-<TouchableOpacity>
-<Ionicons name="menu" size={28} color="#fff"/>
-</TouchableOpacity>
-
-<View style={{alignItems:"center"}}>
-<Text style={styles.title}>School Dashboard</Text>
-<Text style={styles.subtitle}>Management System</Text>
-</View>
-
-<Image
-source={{uri:"https://i.pravatar.cc/100"}}
-style={styles.profile}
+<Header
+title="School Dashboard"
+subtitle="Management System"
 />
-
-</View>
-
 
 <ScrollView showsVerticalScrollIndicator={false}>
 
