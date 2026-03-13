@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -18,11 +18,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 
 import Toast from "react-native-toast-message";
-
 import * as Haptics from "expo-haptics";
 
 import Header from "./components/Header";
-import styles from "./CreateSchoolStyles"; // IMPORTED STYLES
+import styles from "./components/CreateSchoolStyles"; // IMPORTED STYLES
+import { loadFonts } from "./components/Fonts"; // IMPORT FONTS
+import { useFonts } from "expo-font";
 
 export default function CreateSchool() {
 
@@ -30,6 +31,12 @@ export default function CreateSchool() {
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
   const [createdSchool, setCreatedSchool] = useState(null);
+
+  const [fontsLoaded] = useFonts({
+    "Poppins-Regular": require("../assets/fonts/Poppins-Regular.ttf"),
+    "Poppins-Bold": require("../assets/fonts/Poppins-Bold.ttf"),
+    "Poppins-SemiBold": require("../assets/fonts/Poppins-SemiBold.ttf"),
+  });
 
   const scaleAnim = new Animated.Value(1);
 
@@ -50,7 +57,6 @@ export default function CreateSchool() {
 
   // CREATE SCHOOL
   const createSchool = async () => {
-
     if (!name.trim()) {
       Toast.show({
         type: "error",
@@ -59,7 +65,6 @@ export default function CreateSchool() {
       });
       return;
     }
-
     if (!location.trim()) {
       Toast.show({
         type: "error",
@@ -78,7 +83,6 @@ export default function CreateSchool() {
       );
 
       setLoading(false);
-
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       Toast.show({
@@ -87,16 +91,12 @@ export default function CreateSchool() {
         text2: "Your school was registered successfully"
       });
 
-      // Save created school to state
       setCreatedSchool({ name, location });
-
-      // Clear form fields
       setName("");
       setLocation("");
 
     } catch (error) {
       setLoading(false);
-
       Toast.show({
         type: "error",
         text1: "Error",
@@ -104,6 +104,8 @@ export default function CreateSchool() {
       });
     }
   }
+
+  if (!fontsLoaded) return null; // wait for fonts to load
 
   return (
     <LinearGradient
@@ -135,23 +137,25 @@ export default function CreateSchool() {
 
           <BlurView intensity={40} tint="dark" style={styles.blur}>
 
-            <Text style={styles.title}>Register School</Text>
-            <Text style={styles.subtitle}>Create your school and start managing students</Text>
+            <Text style={[styles.title, { fontFamily: "Poppins-Regular" }]}>Register School</Text>
+            <Text style={[styles.subtitle, { fontFamily: "Poppins-Regular" }]}>
+              Create your school and start managing students
+            </Text>
 
             <View style={styles.form}>
 
-              <Text style={styles.label}>School Name</Text>
+              <Text style={[styles.label, { fontFamily: "Poppins-SemiBold" }]}>School Name</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { fontFamily: "Poppins-Regular" }]}
                 placeholder="Enter school name"
                 placeholderTextColor="#94a3b8"
                 value={name}
                 onChangeText={setName}
               />
 
-              <Text style={styles.label}>School Location</Text>
+              <Text style={[styles.label, { fontFamily: "Poppins-SemiBold" }]}>School Location</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { fontFamily: "Poppins-Regular" }]}
                 placeholder="Enter school location"
                 placeholderTextColor="#94a3b8"
                 value={location}
@@ -168,22 +172,28 @@ export default function CreateSchool() {
                     colors={["#2563eb", "#38bdf8"]}
                     style={styles.button}
                   >
-                    <Text style={styles.buttonText}>Create School</Text>
+                    <Text style={[styles.buttonText, { fontFamily: "Poppins-Bold" }]}>Create School</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </Animated.View>
 
               <TouchableOpacity style={{ marginTop: 20 }} onPress={() => { /* optional navigation */ }}>
-                <Text style={styles.link}>Already have account? Login</Text>
+                <Text style={[styles.link, { fontFamily: "Poppins-SemiBold" }]}>
+                  Already have account? Login
+                </Text>
               </TouchableOpacity>
 
             </View>
 
             {createdSchool && (
               <View style={styles.createdCard}>
-                <Text style={styles.createdTitle}>Created School:</Text>
-                <Text style={styles.createdName}>Name: {createdSchool.name}</Text>
-                <Text style={styles.createdLocation}>Location: {createdSchool.location}</Text>
+                <Text style={[styles.createdTitle, { fontFamily: "Poppins-Bold" }]}>Created School:</Text>
+                <Text style={[styles.createdName, { fontFamily: "Poppins-Regular" }]}>
+                  Name: {createdSchool.name}
+                </Text>
+                <Text style={[styles.createdLocation, { fontFamily: "Poppins-Regular" }]}>
+                  Location: {createdSchool.location}
+                </Text>
               </View>
             )}
 
@@ -196,7 +206,9 @@ export default function CreateSchool() {
         <View style={styles.loader}>
           <View style={styles.loaderCard}>
             <ActivityIndicator size="large" color="#2563eb" />
-            <Text style={styles.loadingText}>Creating school...</Text>
+            <Text style={[styles.loadingText, { fontFamily: "Poppins-SemiBold" }]}>
+              Creating school...
+            </Text>
           </View>
         </View>
       )}

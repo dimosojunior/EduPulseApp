@@ -22,7 +22,7 @@ import * as Haptics from "expo-haptics";
 
 import { Ionicons } from "@expo/vector-icons";
 
-import styles from "./LoginStyles"; // imported styles
+import styles from "./components/LoginStyles"; // imported styles
 
 export default function Login() {
 
