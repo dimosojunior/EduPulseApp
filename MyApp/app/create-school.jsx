@@ -20,9 +20,9 @@ import { BlurView } from "expo-blur";
 import Toast from "react-native-toast-message";
 import * as Haptics from "expo-haptics";
 
-import Header from "./components/Header";
-import styles from "./components/CreateSchoolStyles"; // IMPORTED STYLES
-import { loadFonts } from "./components/Fonts"; // IMPORT FONTS
+import Header from "../components/Header";
+import styles from "../components/CreateSchoolStyles"; // IMPORTED STYLES
+import { loadFonts } from "../components/Fonts"; // IMPORT FONTS
 import { useFonts } from "expo-font";
 
 export default function CreateSchool() {

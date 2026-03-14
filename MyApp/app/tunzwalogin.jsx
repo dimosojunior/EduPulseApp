@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   Animated
 } from "react-native";
-import { EventRegister } from 'react-native-event-listeners';
 
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -24,7 +23,6 @@ import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
 
 import styles from "../components/LoginStyles"; // imported styles
-import { EndPoint } from "../components/links";
 
 export default function Login() {
 
@@ -37,18 +35,17 @@ export default function Login() {
 
   const scaleAnim = new Animated.Value(1);
 
-   const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
+  // AUTO LOGIN
+  useEffect(()=>{
+    checkToken();
+  },[])
 
- const showAlertFunction = (message) => {
-    setAlertMessage(message);
-    setShowAlert(true);
-  };
-
-  const hideAlert = () => {
-    setShowAlert(false);
-  };
-
+  const checkToken = async()=>{
+    const token = await AsyncStorage.getItem("token");
+    if(token){
+      router.replace("/");
+    }
+  }
 
   // BUTTON ANIMATION
   const pressIn = ()=>{
@@ -65,191 +62,53 @@ export default function Login() {
     }).start();
   }
 
-
-
-
-//showAlert
-
-  
- 
-  const [error, setError] = useState('');
-  //TO MAKE A LOADING MESSAGE ON A BUTTON
-  const [isPending, setPending] = useState(false);
-    const [secureText, setSecureText] = useState(true);
-   
-    const fadeAnim = useState(new Animated.Value(1))[0];
-
-  //const navigation = useNavigation();
-
-  useEffect(() => {
-    checkLoggedIn();
-  }, []);
-
-  const checkLoggedIn = async () => {
-    const token = await AsyncStorage.getItem('userToken');
-
-
-    if (token) {
-      try {
-        const userResponse = await axios.get(
-          EndPoint + '/Account/user_data/',
-          {
-            headers: {
-              Authorization: `Token ${token}`,
-            },
-          }
-        );
-
-        const userData = userResponse.data;
-       
-
-      } catch (error) {
-        
-      }
-    }
-  };
-
-
-
-
-// const [error, setError] = useState(null);
-const [errorMessage, setErrorMessage] = useState('');
-const emailRegex = /\S+@\S+\.\S+/;
-
-const handleErrorMessage = (error) => {
-    if (error.response) {
-     
-    }  if (error.message === 'Network Error') {
-      setLoading(false);
-      setPending(false);
-      Toast.show({
-              type:"error",
-              text1:"Missing Fields",
-              text2:"Network error"
-            });
-    } else {
-      setLoading(false);
-      setPending(false);
-      Toast.show({
-              type:"error",
-              text1:"Missing Fields",
-              text2:"An error occurred, please try again."
-            });
-      
-    }
-  };
-
-  const loginUser = async () => {
-   
-    
-
-    if (!username && !password) {
-      //setError('Please fill in all fields correctly');
-      
-       Toast.show({
-        type:"error",
-        text1:"Missing Fields",
-        text2:"Please fill in all the information accurately"
-      });
-       setLoading(false);
-      return;
-    }
-
-    if (!username) {
-     // setError('Please enter your registration username correctly');
-      
+  // LOGIN FUNCTION
+  const loginUser = async()=>{
+    if(!username || !password){
       Toast.show({
         type:"error",
         text1:"Missing Fields",
-        text2:"Please fill in your username accurately"
+        text2:"Please enter username and password"
       });
-      setLoading(false);
       return;
     }
 
- 
+    setLoading(true);
 
-    if (!password) {
-      //setError('Please enter your registration password correctly');
-      
-       Toast.show({
-        type:"error",
-        text1:"Missing Fields",
-        text2:"Please fill in your password accurately"
-      });
-      setLoading(false);
-      return;
-    }
-    setPending(true);
-     setLoading(true);
-
-    try {
-      const response = await axios.post(EndPoint + '/Account/login_user/', {
-        username: username,
-        password: password,
-      });
+    try{
+      const response = await axios.post(
+        "https://edupulse.pythonanywhere.com/login/",
+        { username, password }
+      );
 
       const token = response.data.token;
-      await AsyncStorage.setItem('userToken', token);
-      //navigation.emit('updateUserToken', token);
+      await AsyncStorage.setItem("token", token);
 
-      console.log("ENDPOINT", EndPoint);
-
-      // Now, make another request to get user data
-      const userResponse = await axios.get(EndPoint + '/Account/user_data/', {
-        headers: {
-          Authorization: `Token ${token}`,
-        },
-      });
-
-      const userData = userResponse.data;
-      // Save user data to AsyncStorage
-      await AsyncStorage.setItem('userData', JSON.stringify(userData));
-
-      // Emit the 'updateUserToken' event
-      // hii inasaidia kupata a login user token automatically without
-      // page refreshing
-      EventRegister.emit('updateUserToken', token);
-
-        // Confirm AsyncStorage writes are complete before navigating
-    await Promise.all([
-      AsyncStorage.getItem('userToken'),
-      AsyncStorage.getItem('userData'),
-    ]);
-   
-
-   console.log("Token Saved:", token);
-console.log("UserData Saved:", userData);
-
-
-       Toast.show({
-               type:"success",
-               text1:"Login Successful",
-               text2:"Welcome to EduPulse"
-             });
-      router.replace("/(main)/home");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       setLoading(false);
-      setPending(false);
 
-
-    } catch (error) {
-      
-      
       Toast.show({
-      type:"error",
-      text1:"Login Failed",
-      text2:"Invalid username or password"
-    });
-      setPending(false);
-      console.log("Error", error);
-       setLoading(false);
+        type:"success",
+        text1:"Login Successful",
+        text2:"Welcome to EduPulse"
+      });
+
+      setTimeout(()=>{
+        router.replace("/");
+      },1500)
+
+    }catch(error){
+      setLoading(false);
+
+      Toast.show({
+        type:"error",
+        text1:"Login Failed",
+        text2:"Invalid username or password"
+      });
     }
-  };
+  }
 
-
-
-  
   // BIOMETRIC LOGIN
   const biometricLogin = async()=>{
     const compatible = await LocalAuthentication.hasHardwareAsync();
@@ -277,8 +136,6 @@ console.log("UserData Saved:", userData);
       }
     }
   }
-
-
 
   return(
     <LinearGradient
